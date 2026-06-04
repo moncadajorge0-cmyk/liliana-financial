@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Liliana Financial - Gestión Financiera Personal</title>
+    <!-- Fuentes profesionales -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Librería para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Encabezado principal */
+        .main-header {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            border-radius: 20px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-left: 6px solid #f59e0b;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102,126,234,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .main-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .main-header p {
+            color: #64748b;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* Grid de formularios */
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .expense-title { color: #dc2626; }
+        .income-title { color: #10b981; }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Poppins', monospace;
+            transition: all 0.3s;
+            background: #fafbff;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-expense {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+        }
+
+        .btn-expense:hover {
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(220,38,38,0.3);
+        }
+
+        .btn-income {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-income:hover {
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(16,185,129,0.3);
+        }
+
+        /* Listados */
+        .lists-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .list-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .list-header {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .expense-header { border-bottom-color: #dc2626; color: #dc2626; }
+        .income-header { border-bottom-color: #10b981; color: #10b981; }
+
+        .badge-count {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .list-items {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .item-row:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .expense-value { color: #dc2626; }
+        .income-value { color: #10b981; }
+
+        .item-category {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.1);
+        }
+
+        /* Modo edición */
+        .edit-mode {
+            background: #fef3c7;
+            padding: 12px;
+        }
+
+        .inline-edit {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .inline-edit input, .inline-edit select {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 2px solid #f59e0b;
+            font-family: 'Poppins', monospace;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 8px 20px;
+            width: auto;
+            font-size: 0.85rem;
+        }
+
+        /* Panel de totales */
+        .totals-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .total-card {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s;
+        }
+
+        .total-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .total-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .total-number {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: 'Poppins', monospace;
+        }
+
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        .neutral { color: #fbbf24; }
+
+        /* Botón PDF */
+        .pdf-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            width: auto;
+            padding: 15px 40px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(239,68,68,0.3);
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(239,68,68,0.4);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .lists-container {
+                grid-template-columns: 1fr;
+            }
+            .total-number {
+                font-size: 1.3rem;
+            }
+            .main-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- Encabezado -->
+    <div class="main-header">
+        <h1>✨ Liliana Financial</h1>
+        <p>Control financiero profesional | Gestión inteligente de ingresos y gastos</p>
+    </div>
+
+    <!-- Formularios -->
+    <div class="forms-grid">
+        <!-- Egresos -->
+        <div class="form-card">
+            <div class="card-title expense-title">
+                <span>📉 REGISTRAR GASTO</span>
+            </div>
+            <div class="input-group">
+                <label>💰 Monto (COP)</label>
+                <input type="number" id="expenseAmount" placeholder="Ej: 25000" step="any">
+            </div>
+            <div class="input-group">
+                <label>📂 Categoría</label>
+                <select id="expenseCategory">
+                    <option value="Alimentación">🍎 Alimentación</option>
+                    <option value="Vehículo">🚗 Vehículo</option>
+                    <option value="Estudio">📚 Estudio</option>
+                    <option value="Viajes">✈️ Viajes</option>
+                    <option value="Vestuario y aseo personal">👕 Vestuario y aseo personal</option>
+                    <option value="Servicios públicos">💡 Servicios públicos</option>
+                    <option value="Arriendos">🏠 Arriendos</option>
+                    <option value="Diversión">🎉 Diversión</option>
+                </select>
+            </div>
+            <button class="btn-expense" id="addExpenseBtn">+ Agregar Gasto</button>
+        </div>
+
+        <!-- Ingresos -->
+        <div class="form-card">
+            <div class="card-title income-title">
+                <span>📈 REGISTRAR INGRESO</span>
+            </div>
+            <div class="input-group">
+                <label>💵 Monto (COP)</label>
+                <input type="number" id="incomeAmount" placeholder="Ej: 1500000" step="any">
+            </div>
+            <div class="input-group">
+                <label>🌍 Categoría</label>
+                <select id="incomeCategory">
+                    <option value="Perú">🇵🇪 Perú</option>
+                    <option value="Brasil">🇧🇷 Brasil</option>
+                    <option value="Colombia">🇨🇴 Colombia</option>
+                    <option value="Pagos">💼 Pagos</option>
+                </select>
+            </div>
+            <button class="btn-income" id="addIncomeBtn">+ Agregar Ingreso</button>
+        </div>
+    </div>
+
+    <!-- Listados -->
+    <div class="lists-container">
+        <div class="list-card">
+            <div class="list-header expense-header">
+                <span>📋 LISTA DE GASTOS</span>
+                <span class="badge-count" id="expenseCount">0</span>
+            </div>
+            <div class="list-items" id="expensesList">
+                <div class="empty-message">No hay gastos registrados</div>
+            </div>
+        </div>
+        <div class="list-card">
+            <div class="list-header income-header">
+                <span>💰 LISTA DE INGRESOS</span>
+                <span class="badge-count" id="incomeCount">0</span>
+            </div>
+            <div class="list-items" id="incomesList">
+                <div class="empty-message">No hay ingresos registrados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de totales -->
+    <div class="totals-panel" id="reportSection">
+        <div class="total-card">
+            <div class="total-label">💰 TOTAL INGRESOS (MES)</div>
+            <div class="total-number positive" id="totalIncomes">$0</div>
+        </div>
+        <div class="total-card">
+            <div class="total-label">💸 TOTAL GASTOS</div>
+            <div class="total-number negative" id="totalExpenses">$0</div>
+        </div>
+        <div class="total-card">
+            <div class="total-label">⚖️ SALDO FINAL</div>
+            <div class="total-number" id="finalBalance">$0</div>
+        </div>
+        <div class="total-card">
+            <div class="total-label">💰 DINERO DISPONIBLE</div>
+            <div class="total-number positive" id="availableMoney">$0</div>
+        </div>
+    </div>
+
+    <!-- Botón PDF -->
+    <div class="pdf-section">
+        <button class="btn-pdf" id="printPDFBtn">
+            📄 GENERAR REPORTE PDF
+        </button>
+    </div>
+</div>
+
+<script>
+    // ==================== ESTRUCTURA DE DATOS ====================
+    let expenses = [];
+    let incomes = [];
+    let nextExpenseId = 1;
+    let nextIncomeId = 1;
+    let editingExpenseId = null;
+    let editingIncomeId = null;
+
+    // DOM Elements
+    const expenseAmountInput = document.getElementById('expenseAmount');
+    const expenseCategorySelect = document.getElementById('expenseCategory');
+    const addExpenseBtn = document.getElementById('addExpenseBtn');
+    const incomeAmountInput = document.getElementById('incomeAmount');
+    const incomeCategorySelect = document.getElementById('incomeCategory');
+    const addIncomeBtn = document.getElementById('addIncomeBtn');
+    const expensesListDiv = document.getElementById('expensesList');
+    const incomesListDiv = document.getElementById('incomesList');
+    const totalIncomesSpan = document.getElementById('totalIncomes');
+    const totalExpensesSpan = document.getElementById('totalExpenses');
+    const finalBalanceSpan = document.getElementById('finalBalance');
+    const availableMoneySpan = document.getElementById('availableMoney');
+    const expenseCountSpan = document.getElementById('expenseCount');
+    const incomeCountSpan = document.getElementById('incomeCount');
+
+    // ==================== FUNCIONES ====================
+    function calculateTotals() {
+        const totalExp = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalInc = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+        const balance = totalInc - totalExp;
+        
+        totalExpensesSpan.innerText = `$${totalExp.toLocaleString('es-CO')}`;
+        totalIncomesSpan.innerText = `$${totalInc.toLocaleString('es-CO')}`;
+        finalBalanceSpan.innerText = `$${balance.toLocaleString('es-CO')}`;
+        availableMoneySpan.innerText = `$${Math.max(0, balance).toLocaleString('es-CO')}`;
+        
+        if (balance >= 0) {
+            finalBalanceSpan.className = 'total-number positive';
+            availableMoneySpan.className = 'total-number positive';
+        } else {
+            finalBalanceSpan.className = 'total-number negative';
+            availableMoneySpan.className = 'total-number neutral';
+        }
+        
+        expenseCountSpan.innerText = expenses.length;
+        incomeCountSpan.innerText = incomes.length;
+        
+        return { totalExp, totalInc, balance };
+    }
+
+    function saveToLocalStorage() {
+        const data = { expenses, incomes, nextExpenseId, nextIncomeId };
+        localStorage.setItem('lilianaFinancialData', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('lilianaFinancialData');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                expenses = data.expenses || [];
+                incomes = data.incomes || [];
+                nextExpenseId = data.nextExpenseId || 1;
+                nextIncomeId = data.nextIncomeId || 1;
+                
+                if (expenses.length > 0) {
+                    const maxExpId = Math.max(...expenses.map(e => e.id), 0);
+                    nextExpenseId = Math.max(nextExpenseId, maxExpId + 1);
+                }
+                if (incomes.length > 0) {
+                    const maxIncId = Math.max(...incomes.map(i => i.id), 0);
+                    nextIncomeId = Math.max(nextIncomeId, maxIncId + 1);
+                }
+            } catch(e) { console.warn(e); }
+        }
+        renderAll();
+    }
+
+    function renderAll() {
+        renderExpenses();
+        renderIncomes();
+        calculateTotals();
+        saveToLocalStorage();
+    }
+
+    function renderExpenses() {
+        if (!expensesListDiv) return;
+        if (expenses.length === 0) {
+            expensesListDiv.innerHTML = '<div class="empty-message">No hay gastos registrados</div>';
+            return;
+        }
+        
+        expensesListDiv.innerHTML = '';
+        expenses.forEach(exp => {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            
+            if (editingExpenseId === exp.id) {
+                row.classList.add('edit-mode');
+                const editDiv = document.createElement('div');
+                editDiv.className = 'inline-edit';
+                
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.value = exp.amount;
+                amountInput.step = 'any';
+                
+                const catSelect = document.createElement('select');
+                const expenseCats = ["Alimentación", "Vehículo", "Estudio", "Viajes", "Vestuario y aseo personal", "Servicios públicos", "Arriendos", "Diversión"];
+                expenseCats.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    if (exp.category === cat) option.selected = true;
+                    catSelect.appendChild(option);
+                });
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = '💾 Guardar';
+                saveBtn.className = 'save-btn';
+                saveBtn.onclick = () => {
+                    const newAmount = parseFloat(amountInput.value);
+                    if (isNaN(newAmount) || newAmount <= 0) {
+                        alert("Ingrese un monto válido");
+                        return;
+                    }
+                    exp.amount = newAmount;
+                    exp.category = catSelect.value;
+                    editingExpenseId = null;
+                    renderAll();
+                };
+                
+                editDiv.appendChild(amountInput);
+                editDiv.appendChild(catSelect);
+                editDiv.appendChild(saveBtn);
+                row.appendChild(editDiv);
+            } else {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'item-info';
+                infoDiv.innerHTML = `
+                    <div class="item-value expense-value">$${exp.amount.toLocaleString('es-CO')}</div>
+                    <div class="item-category">📌 ${exp.category}</div>
+                `;
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '✏️';
+                editBtn.className = 'edit-btn';
+                editBtn.title = 'Editar gasto';
+                editBtn.onclick = () => {
+                    if (editingIncomeId !== null) editingIncomeId = null;
+                    editingExpenseId = exp.id;
+                    renderAll();
+                };
+                row.appendChild(infoDiv);
+                row.appendChild(editBtn);
+            }
+            expensesListDiv.appendChild(row);
+        });
+    }
+    
+    function renderIncomes() {
+        if (!incomesListDiv) return;
+        if (incomes.length === 0) {
+            incomesListDiv.innerHTML = '<div class="empty-message">No hay ingresos registrados</div>';
+            return;
+        }
+        
+        incomesListDiv.innerHTML = '';
+        incomes.forEach(inc => {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            
+            if (editingIncomeId === inc.id) {
+                row.classList.add('edit-mode');
+                const editDiv = document.createElement('div');
+                editDiv.className = 'inline-edit';
+                
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.value = inc.amount;
+                amountInput.step = 'any';
+                
+                const catSelect = document.createElement('select');
+                const incomeCats = ["Perú", "Brasil", "Colombia", "Pagos"];
+                incomeCats.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    if (inc.category === cat) option.selected = true;
+                    catSelect.appendChild(option);
+                });
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = '💾 Guardar';
+                saveBtn.className = 'save-btn';
+                saveBtn.onclick = () => {
+                    const newAmount = parseFloat(amountInput.value);
+                    if (isNaN(newAmount) || newAmount <= 0) {
+                        alert("Ingrese un monto válido");
+                        return;
+                    }
+                    inc.amount = newAmount;
+                    inc.category = catSelect.value;
+                    editingIncomeId = null;
+                    renderAll();
+                };
+                
+                editDiv.appendChild(amountInput);
+                editDiv.appendChild(catSelect);
+                editDiv.appendChild(saveBtn);
+                row.appendChild(editDiv);
+            } else {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'item-info';
+                infoDiv.innerHTML = `
+                    <div class="item-value income-value">$${inc.amount.toLocaleString('es-CO')}</div>
+                    <div class="item-category">🌍 ${inc.category}</div>
+                `;
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '✏️';
+                editBtn.className = 'edit-btn';
+                editBtn.title = 'Editar ingreso';
+                editBtn.onclick = () => {
+                    if (editingExpenseId !== null) editingExpenseId = null;
+                    editingIncomeId = inc.id;
+                    renderAll();
+                };
+                row.appendChild(infoDiv);
+                row.appendChild(editBtn);
+            }
+            incomesListDiv.appendChild(row);
+        });
+    }
+
+    function addExpense() {
+        let amount = parseFloat(expenseAmountInput.value);
+        const category = expenseCategorySelect.value;
+        if (isNaN(amount) || amount <= 0) {
+            alert("Por favor ingrese un monto válido para el gasto");
+            return;
+        }
+        amount = Math.round(amount * 100) / 100;
+        expenses.push({ id: nextExpenseId++, amount, category });
+        expenseAmountInput.value = '';
+        editingExpenseId = null;
+        editingIncomeId = null;
+        renderAll();
+    }
+    
+    function addIncome() {
+        let amount = parseFloat(incomeAmountInput.value);
+        const category = incomeCategorySelect.value;
+        if (isNaN(amount) || amount <= 0) {
+            alert("Por favor ingrese un monto válido para el ingreso");
+            return;
+        }
+        amount = Math.round(amount * 100) / 100;
+        incomes.push({ id: nextIncomeId++, amount, category });
+        incomeAmountInput.value = '';
+        editingExpenseId = null;
+        editingIncomeId = null;
+        renderAll();
+    }
+
+    function generatePDF() {
+        const { totalExp, totalInc, balance } = calculateTotals();
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('es-ES');
+        const fileName = `Reporte_Finanzas_${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}.pdf`;
+        
+        const pdfContent = document.createElement('div');
+        pdfContent.style.padding = '40px';
+        pdfContent.style.fontFamily = 'Poppins, Arial, sans-serif';
+        pdfContent.style.backgroundColor = 'white';
+        pdfContent.innerHTML = `
+            <div style="text-align: center; margin-bottom: 35px; border-bottom: 3px solid #667eea; padding-bottom: 25px;">
+                <h1 style="color: #667eea; font-size: 32px; margin-bottom: 10px;">✨ Liliana Financial</h1>
+                <h3 style="color: #475569;">Reporte Financiero Mensual</h3>
+                <p style="color: #64748b; margin-top: 10px;">Fecha de generación: ${dateStr}</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 35px;">
+                <div style="background: #fef2f2; padding: 25px; border-radius: 16px;">
+                    <h2 style="color: #dc2626; margin-bottom: 20px; font-size: 24px;">📉 GASTOS</h2>
+                    ${expenses.length === 0 ? '<p style="text-align: center; color: #94a3b8;">No hay gastos registrados</p>' : 
+                        `<table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #dc2626; background: #fee2e2;">
+                                    <th style="text-align: left; padding: 12px;">Categoría</th>
+                                    <th style="text-align: right; padding: 12px;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${expenses.map(exp => `
+                                    <tr style="border-bottom: 1px solid #fecaca;">
+                                        <td style="padding: 10px;">${exp.category}</td>
+                                        <td style="text-align: right; padding: 10px; font-weight: 600;">$${exp.amount.toLocaleString('es-CO')}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr style="border-top: 2px solid #dc2626; background: #fee2e2; font-weight: bold;">
+                                    <td style="padding: 12px;">TOTAL GASTOS</td>
+                                    <td style="text-align: right; padding: 12px;">$${totalExp.toLocaleString('es-CO')}</td>
+                                </tr>
+                            </tbody>
+                        </table>`
+                    }
+                </div>
+                
+                <div style="background: #f0fdf4; padding: 25px; border-radius: 16px;">
+                    <h2 style="color: #10b981; margin-bottom: 20px; font-size: 24px;">💰 INGRESOS</h2>
+                    ${incomes.length === 0 ? '<p style="text-align: center; color: #94a3b8;">No hay ingresos registrados</p>' :
+                        `<table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #10b981; background: #d1fae5;">
+                                    <th style="text-align: left; padding: 12px;">Categoría</th>
+                                    <th style="text-align: right; padding: 12px;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${incomes.map(inc => `
+                                    <tr style="border-bottom: 1px solid #a7f3d0;">
+                                        <td style="padding: 10px;">${inc.category}</td>
+                                        <td style="text-align: right; padding: 10px; font-weight: 600;">$${inc.amount.toLocaleString('es-CO')}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr style="border-top: 2px solid #10b981; background: #d1fae5; font-weight: bold;">
+                                    <td style="padding: 12px;">TOTAL INGRESOS</td>
+                                    <td style="text-align: right; padding: 12px;">$${totalInc.toLocaleString('es-CO')}</td>
+                                </tr>
+                            </tbody>
+                        </table>`
+                    }
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 20px; color: white; text-align: center;">
+                <h3 style="margin-bottom: 20px; font-size: 28px;">📊 RESUMEN FINANCIERO</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <p style="font-size: 14px; opacity: 0.9;">INGRESOS TOTALES</p>
+                        <p style="font-size: 24px; font-weight: 800;">$${totalInc.toLocaleString('es-CO')}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; opacity: 0.9;">GASTOS TOTALES</p>
+                        <p style="font-size: 24px; font-weight: 800;">$${totalExp.toLocaleString('es-CO')}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; opacity: 0.9;">SALDO FINAL</p>
+                        <p style="font-size: 28px; font-weight: 800;">$${balance.toLocaleString('es-CO')}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 14px; opacity: 0.9;">DINERO DISPONIBLE</p>
+                        <p style="font-size: 24px; font-weight: 800;">$${Math.max(0, balance).toLocaleString('es-CO')}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; color: #94a3b8; font-size: 11px;">
+                <p>Reporte generado automáticamente por Liliana Financial - Sistema de gestión financiera personal</p>
+                <p>Este documento contiene información confidencial de tus finanzas personales</p>
+            </div>
+        `;
+        
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(pdfContent).save();
+    }
+
+    // Event listeners
+    addExpenseBtn.addEventListener('click', addExpense);
+    addIncomeBtn.addEventListener('click', addIncome);
+    document.getElementById('printPDFBtn').addEventListener('click', generatePDF);
+    
+    expenseAmountInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addExpense(); });
+    incomeAmountInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addIncome(); });
+    
+    // Inicializar
+    loadFromLocalStorage();
+</script>
+</body>
+</html>
